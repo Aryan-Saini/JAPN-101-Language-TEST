@@ -22,12 +22,35 @@ const vocalizedHiragana = [
   { char: 'ぱ', romaji: 'pa' }, { char: 'ぴ', romaji: 'pi' }, { char: 'ぷ', romaji: 'pu' }, { char: 'ぺ', romaji: 'pe' }, { char: 'ぽ', romaji: 'po' }
 ]
 
+const contractedHiragana = [
+  { char: 'きゃ', romaji: 'kya' }, { char: 'きゅ', romaji: 'kyu' }, { char: 'きょ', romaji: 'kyo' },
+  { char: 'しゃ', romaji: 'sha' }, { char: 'しゅ', romaji: 'shu' }, { char: 'しょ', romaji: 'sho' },
+  { char: 'ちゃ', romaji: 'cha' }, { char: 'ちゅ', romaji: 'chu' }, { char: 'ちょ', romaji: 'cho' },
+  { char: 'にゃ', romaji: 'nya' }, { char: 'にゅ', romaji: 'nyu' }, { char: 'にょ', romaji: 'nyo' },
+  { char: 'ひゃ', romaji: 'hya' }, { char: 'ひゅ', romaji: 'hyu' }, { char: 'ひょ', romaji: 'hyo' },
+  { char: 'みゃ', romaji: 'mya' }, { char: 'みゅ', romaji: 'myu' }, { char: 'みょ', romaji: 'myo' },
+  { char: 'りゃ', romaji: 'rya' }, { char: 'りゅ', romaji: 'ryu' }, { char: 'りょ', romaji: 'ryo' },
+  { char: 'ぎゃ', romaji: 'gya' }, { char: 'ぎゅ', romaji: 'gyu' }, { char: 'ぎょ', romaji: 'gyo' },
+  { char: 'じゃ', romaji: 'ja' }, { char: 'じゅ', romaji: 'ju' }, { char: 'じょ', romaji: 'jo' },
+  { char: 'びゃ', romaji: 'bya' }, { char: 'びゅ', romaji: 'byu' }, { char: 'びょ', romaji: 'byo' },
+  { char: 'ぴゃ', romaji: 'pya' }, { char: 'ぴゅ', romaji: 'pyu' }, { char: 'ぴょ', romaji: 'pyo' }
+]
+
 function App() {
   const [enableVocalized, setEnableVocalized] = useState(() => {
     const saved = localStorage.getItem('enableVocalized')
     return saved ? JSON.parse(saved) : false
   })
-  const hiraganaList = enableVocalized ? [...allHiragana, ...vocalizedHiragana] : allHiragana
+  const [enableContracted, setEnableContracted] = useState(() => {
+    const saved = localStorage.getItem('enableContracted')
+    return saved ? JSON.parse(saved) : false
+  })
+  
+  const hiraganaList = [
+    ...allHiragana,
+    ...(enableVocalized ? vocalizedHiragana : []),
+    ...(enableContracted ? contractedHiragana : [])
+  ]
   
   const [selected, setSelected] = useState(() => {
     const saved = localStorage.getItem('selected')
@@ -45,7 +68,24 @@ function App() {
     const newValue = !enableVocalized
     setEnableVocalized(newValue)
     localStorage.setItem('enableVocalized', JSON.stringify(newValue))
-    const newList = newValue ? [...allHiragana, ...vocalizedHiragana] : allHiragana
+    const newList = [
+      ...allHiragana,
+      ...(newValue ? vocalizedHiragana : []),
+      ...(enableContracted ? contractedHiragana : [])
+    ]
+    setSelected(new Set(newList.map((_, i) => i)))
+    localStorage.setItem('selected', JSON.stringify([...newList.map((_, i) => i)]))
+  }
+
+  const toggleContracted = () => {
+    const newValue = !enableContracted
+    setEnableContracted(newValue)
+    localStorage.setItem('enableContracted', JSON.stringify(newValue))
+    const newList = [
+      ...allHiragana,
+      ...(enableVocalized ? vocalizedHiragana : []),
+      ...(newValue ? contractedHiragana : [])
+    ]
     setSelected(new Set(newList.map((_, i) => i)))
     localStorage.setItem('selected', JSON.stringify([...newList.map((_, i) => i)]))
   }
@@ -84,17 +124,16 @@ function App() {
     newQuestion()
   }
 
-  const startTypeAll = () => {
-    if (selected.size === 0) return
-    setMode('typeAll')
-    setHistory([])
-    setInput('')
-    newQuestion()
-  }
-
   const startReverse = () => {
     if (selected.size === 0) return
     setMode('reverse')
+    setHistory([])
+    newQuestion()
+  }
+
+  const startReverseAll = () => {
+    if (selected.size === 0) return
+    setMode('reverseAll')
     setHistory([])
     newQuestion()
   }
@@ -168,8 +207,14 @@ function App() {
   if (mode === 'select') {
     return (
       <div className="container">
-        <h1>Select Hiragana to Practice</h1>
-        <div style={{ marginBottom: '1rem' }}>
+        <div style={{ position: 'absolute', top: '1rem', right: '1rem', fontSize: '1.2rem', fontWeight: 'bold' }}>
+          アリアン様の教え
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '1rem' }}>
+          <img src="/japanlogo.png" alt="Japan Logo" style={{ height: '60px', marginRight: '1rem' }} />
+          <h1 style={{ margin: 0 }}>Select Hiragana to Practice</h1>
+        </div>
+        <div style={{ marginBottom: '1rem', display: 'flex', flexDirection: 'column', gap: '0.5rem', alignItems: 'center' }}>
           <label style={{ fontSize: '1.2rem', cursor: 'pointer' }}>
             <input 
               type="checkbox" 
@@ -178,6 +223,15 @@ function App() {
               style={{ marginRight: '0.5rem' }}
             />
             Enable Vocalized (dakuten/handakuten)
+          </label>
+          <label style={{ fontSize: '1.2rem', cursor: 'pointer' }}>
+            <input 
+              type="checkbox" 
+              checked={enableContracted} 
+              onChange={toggleContracted}
+              style={{ marginRight: '0.5rem' }}
+            />
+            Enable Contracted Sounds (yōon)
           </label>
         </div>
         <div className="grid">
@@ -199,11 +253,11 @@ function App() {
           <button className="start-btn" style={{ background: '#3498db' }} onClick={startType} disabled={selected.size === 0}>
             Type Mode ({selected.size})
           </button>
-          <button className="start-btn" style={{ background: '#3498db' }} onClick={startTypeAll} disabled={selected.size === 0}>
-            Type All Options ({selected.size})
-          </button>
           <button className="start-btn" style={{ background: '#e67e22' }} onClick={startReverse} disabled={selected.size === 0}>
             Reverse ({selected.size})
+          </button>
+          <button className="start-btn" style={{ background: '#e67e22' }} onClick={startReverseAll} disabled={selected.size === 0}>
+            Reverse All Options ({selected.size})
           </button>
           <button className="start-btn" style={{ background: '#9b59b6' }} onClick={startTest} disabled={selected.size === 0}>
             Test ({selected.size})
@@ -276,33 +330,6 @@ function App() {
     )
   }
 
-  if (mode === 'typeAll') {
-    const selectedHiragana = [...selected].map(i => hiraganaList[i])
-    
-    return (
-      <div className="container">
-        <button className="back-btn" onClick={() => setMode('select')}>← Back to Selection</button>
-        <div className="question-char">{current !== null && hiraganaList[current].char}</div>
-        <form onSubmit={checkType} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1rem' }}>
-          <input 
-            type="text" 
-            value={input} 
-            onChange={(e) => setInput(e.target.value)}
-            autoFocus
-            style={{ fontSize: '1.5rem', padding: '0.5rem', textAlign: 'center', width: '200px' }}
-          />
-          <button type="submit" className="start-btn">Submit</button>
-        </form>
-        <div className="options">
-          {selectedHiragana.map((h, i) => (
-            <button key={i} className="option-btn" style={{ fontSize: '1rem', padding: '0.5rem' }}>{h.romaji}</button>
-          ))}
-        </div>
-        {result && <div className={`result ${result}`}>{result === 'correct' ? '✓ Correct!' : '✗ Try again'}</div>}
-      </div>
-    )
-  }
-
   if (mode === 'practiceAll') {
     const selectedHiragana = [...selected].map(i => hiraganaList[i])
 
@@ -334,6 +361,23 @@ function App() {
         <div className="question-char">{current !== null && hiraganaList[current].romaji}</div>
         <div className="options">
           {choices.map((h, i) => (
+            <button key={i} className="option-btn" onClick={() => checkReverse(h.char)} style={{ fontSize: '2rem' }}>{h.char}</button>
+          ))}
+        </div>
+        {result && <div className={`result ${result}`}>{result === 'correct' ? '✓ Correct!' : '✗ Try again'}</div>}
+      </div>
+    )
+  }
+
+  if (mode === 'reverseAll') {
+    const selectedHiragana = [...selected].map(i => hiraganaList[i])
+
+    return (
+      <div className="container">
+        <button className="back-btn" onClick={() => setMode('select')}>← Back to Selection</button>
+        <div className="question-char">{current !== null && hiraganaList[current].romaji}</div>
+        <div className="options">
+          {selectedHiragana.map((h, i) => (
             <button key={i} className="option-btn" onClick={() => checkReverse(h.char)} style={{ fontSize: '2rem' }}>{h.char}</button>
           ))}
         </div>
