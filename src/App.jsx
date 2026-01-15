@@ -69,9 +69,24 @@ function App() {
     newQuestion()
   }
 
+  const startPracticeAll = () => {
+    if (selected.size === 0) return
+    setMode('practiceAll')
+    setHistory([])
+    newQuestion()
+  }
+
   const startType = () => {
     if (selected.size === 0) return
     setMode('type')
+    setHistory([])
+    setInput('')
+    newQuestion()
+  }
+
+  const startTypeAll = () => {
+    if (selected.size === 0) return
+    setMode('typeAll')
     setHistory([])
     setInput('')
     newQuestion()
@@ -178,8 +193,14 @@ function App() {
           <button className="start-btn" onClick={startPractice} disabled={selected.size === 0}>
             Practice ({selected.size})
           </button>
+          <button className="start-btn" onClick={startPracticeAll} disabled={selected.size === 0}>
+            Practice All Options ({selected.size})
+          </button>
           <button className="start-btn" style={{ background: '#3498db' }} onClick={startType} disabled={selected.size === 0}>
             Type Mode ({selected.size})
+          </button>
+          <button className="start-btn" style={{ background: '#3498db' }} onClick={startTypeAll} disabled={selected.size === 0}>
+            Type All Options ({selected.size})
           </button>
           <button className="start-btn" style={{ background: '#e67e22' }} onClick={startReverse} disabled={selected.size === 0}>
             Reverse ({selected.size})
@@ -250,6 +271,50 @@ function App() {
           />
           <button type="submit" className="start-btn">Submit</button>
         </form>
+        {result && <div className={`result ${result}`}>{result === 'correct' ? '✓ Correct!' : '✗ Try again'}</div>}
+      </div>
+    )
+  }
+
+  if (mode === 'typeAll') {
+    const selectedHiragana = [...selected].map(i => hiraganaList[i])
+    
+    return (
+      <div className="container">
+        <button className="back-btn" onClick={() => setMode('select')}>← Back to Selection</button>
+        <div className="question-char">{current !== null && hiraganaList[current].char}</div>
+        <form onSubmit={checkType} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1rem' }}>
+          <input 
+            type="text" 
+            value={input} 
+            onChange={(e) => setInput(e.target.value)}
+            autoFocus
+            style={{ fontSize: '1.5rem', padding: '0.5rem', textAlign: 'center', width: '200px' }}
+          />
+          <button type="submit" className="start-btn">Submit</button>
+        </form>
+        <div className="options">
+          {selectedHiragana.map((h, i) => (
+            <button key={i} className="option-btn" style={{ fontSize: '1rem', padding: '0.5rem' }}>{h.romaji}</button>
+          ))}
+        </div>
+        {result && <div className={`result ${result}`}>{result === 'correct' ? '✓ Correct!' : '✗ Try again'}</div>}
+      </div>
+    )
+  }
+
+  if (mode === 'practiceAll') {
+    const selectedHiragana = [...selected].map(i => hiraganaList[i])
+
+    return (
+      <div className="container">
+        <button className="back-btn" onClick={() => setMode('select')}>← Back to Selection</button>
+        <div className="question-char">{current !== null && hiraganaList[current].char}</div>
+        <div className="options">
+          {selectedHiragana.map((h, i) => (
+            <button key={i} className="option-btn" onClick={() => check(h.romaji)}>{h.romaji}</button>
+          ))}
+        </div>
         {result && <div className={`result ${result}`}>{result === 'correct' ? '✓ Correct!' : '✗ Try again'}</div>}
       </div>
     )
